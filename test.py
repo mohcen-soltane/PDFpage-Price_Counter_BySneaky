@@ -109,13 +109,52 @@ def index():
 
 @app.route("/process", methods=["POST"])
 def process():
-    path = request.form.get("path")
-    results, error = count_pdf_pages(path)
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"})
 
-    if error:
-        return jsonify({"error": error})
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No file selected"})
+
+    if file and file.filename.lower().endswith(".pdf"):
+        # Save the file temporarily
+        file_path = os.path.join("/tmp", file.filename)
+        file.save(file_path)
+
+        # Process the file
+        results, error = count_pdf_pages(file_path)
+
+        # Delete the temporary file
+        os.remove(file_path)
+
+        if error:
+            return jsonify({"error": error})
+        else:
+            return jsonify(results)
     else:
-        return jsonify(results)
+        return jsonify({"error": "The provided file is not a PDF"})
+
+@app.route("/process_manual", methods=["POST"])
+def process_manual():
+    try:
+        total_pages = int(request.form.get("total_pages"))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid number of pages. Please enter a valid integer."})
+
+    # Calculate expected prices
+    one_column_price = total_pages * 1.5
+    two_column_price = total_pages * 2.0
+    arabic_price = total_pages * 3.0
+
+    # Prepare results
+    results = {
+        "total_pages": total_pages,
+        "one_column_price": f"{one_column_price:.2f}",
+        "two_column_price": f"{two_column_price:.2f}",
+        "arabic_price": f"{arabic_price:.2f}"
+    }
+
+    return jsonify(results)
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
