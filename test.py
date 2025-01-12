@@ -1,13 +1,9 @@
 import os
 import glob
-import webbrowser
 import fitz  # PyMuPDF
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
-
-# Flag to track if the browser has been opened
-browser_opened = False
 
 def is_page_live(page):
     """
@@ -164,19 +160,7 @@ def shutdown():
     os._exit(0)  # Forcefully terminate the app
     return "Shutting down..."
 
-def open_browser():
-    """
-    Open the browser only once when the app starts.
-    """
-    global browser_opened
-    if not browser_opened:
-        webbrowser.open("http://127.0.0.1:5000")
-        browser_opened = True
-
 if __name__ == "__main__":
-    # Open the browser automatically (only once)
-    open_browser()
-
     # Run the Flask app
     port = int(os.environ.get("PORT", 5000))  # Use Render's port or default to 5000
     app.run(host="0.0.0.0", port=port)
