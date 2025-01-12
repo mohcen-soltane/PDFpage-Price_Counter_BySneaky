@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Page Counter</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .warning-message {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ffeeba;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        #quick-process {
+            background-color: #ff8c00;
+            color: white;
+        }
+
+        #normal-process {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #clear-results {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        #calculate-pricing {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .manual-pages {
+            margin-top: 15px;
+            display: none; /* Hidden by default */
+        }
+
+        .manual-pages input {
+            width: 100px;
+            margin-right: 10px;
+        }
+
+        .toggle-group {
+            margin: 20px 0;
+        }
+
+        .toggle-group label {
+            display: inline-block;
+            margin-right: 15px;
+            color: #555;
+        }
+
+        .toggle-group input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .loading-circle {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .manual-pages-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .manual-pages-link:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Warning Message -->
+        <div class="warning-message">
+            ⚠️ DON'T refresh the page, OTHERWISE you'll need to restart the APP manually.
+        </div>
+
+        <h1>PDF Page Counter</h1>
+        <form id="pdf-form">
+            <div class="form-group">
+                <label for="path">Enter PDF file or folder path:</label>
+                <input type="text" id="path" name="path">
+            </div>
+
+            <!-- Toggle for manual page count -->
+            <div class="form-group">
+                <a href="#" id="toggle-manual-pages" class="manual-pages-link">Click here to enter number of pages if already known</a>
+            </div>
+
+            <!-- Manual page count input (hidden by default) -->
+            <div class="manual-pages" id="manual-pages">
+                <label for="total_pages">Number of Pages:</label>
+                <input type="number" id="total_pages" name="total_pages" min="1">
+                <button type="button" id="calculate-pricing">Calculate Pricing</button>
+            </div>
+
+            <!-- Toggle switches for pricing types -->
+            <div class="toggle-group">
+                <label>
+                    <input type="checkbox" id="toggle-one-column" checked> 1-Column Pricing
+                </label>
+                <label>
+                    <input type="checkbox" id="toggle-two-column" checked> 2-Column Pricing
+                </label>
+                <label>
+                    <input type="checkbox" id="toggle-arabic" checked> Arabic Pricing
+                </label>
+            </div>
+
+            <button type="button" id="quick-process">Quick Process</button>
+            <button type="button" id="normal-process">Normal Process</button>
+            <button type="button" id="clear-results">Clear Results</button>
+        </form>
+
+        <!-- Loading Circle -->
+        <div class="loading-circle" id="loading-circle"></div>
+
+        <div id="error" class="error"></div>
+
+        <div id="results" class="results">
+            <h2>Results</h2>
+            <table id="results-table">
+                <!-- Results will be populated here -->
+            </table>
+
+            <h2>Expected Prices</h2>
+            <table id="prices-table">
+                <!-- Prices will be populated here -->
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Toggle manual page count input
+        document.getElementById("toggle-manual-pages").addEventListener("click", (e) => {
+            e.preventDefault();
+            const manualPagesDiv = document.getElementById("manual-pages");
+            if (manualPagesDiv.style.display === "none" || manualPagesDiv.style.display === "") {
+                manualPagesDiv.style.display = "block";
+            } else {
+                manualPagesDiv.style.display = "none";
+            }
+            document.getElementById("path").disabled = manualPagesDiv.style.display === "block";
+        });
+
+        // Show loading circle and disable buttons during processing
+        function setLoading(isLoading) {
+            const loadingCircle = document.getElementById("loading-circle");
+            const buttons = document.querySelectorAll("button");
+            loadingCircle.style.display = isLoading ? "block" : "none";
+            buttons.forEach(button => button.disabled = isLoading);
+        }
+
+        // Handle manual pricing calculation
+        document.getElementById("calculate-pricing").addEventListener("click", async () => {
+            const totalPages = document.getElementById("total_pages").value;
+            if (!totalPages || isNaN(totalPages) || totalPages < 1) {
+                document.getElementById("error").textContent = "Please enter a valid number of pages.";
+                return;
+            }
+
+            setLoading(true);
+            document.getElementById("error").textContent = "";
+
+            const response = await fetch("/process_manual", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `total_pages=${encodeURIComponent(totalPages)}`,
+            });
+
+            const data = await response.json();
+
+            setLoading(false);
+
+            if (data.error) {
+                document.getElementById("error").textContent = data.error;
+                document.getElementById("results").style.display = "none";
+            } else {
+                document.getElementById("results").style.display = "block";
+                updatePricingTable(data, "manual");
+            }
+        });
+
+        // Handle quick process button click
+        document.getElementById("quick-process").addEventListener("click", async () => {
+            await processPDF("quick");
+        });
+
+        // Handle normal process button click
+        document.getElementById("normal-process").addEventListener("click", async () => {
+            await processPDF("normal");
+        });
+
+        async function processPDF(processType) {
+            const path = document.getElementById("path").value;
+            if (!path) {
+                document.getElementById("error").textContent = "Please enter a file/folder path.";
+                return;
+            }
+
+            setLoading(true);
+            document.getElementById("error").textContent = "";
+
+            const response = await fetch("/process", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `path=${encodeURIComponent(path)}&process_type=${processType}`,
+            });
+
+            const data = await response.json();
+
+            setLoading(false);
+
+            if (data.error) {
+                document.getElementById("error").textContent = data.error;
+                document.getElementById("results").style.display = "none";
+            } else {
+                document.getElementById("results").style.display = "block";
+                updatePricingTable(data, processType);
+            }
+        }
+
+        // Update pricing table based on toggles
+        function updatePricingTable(data, processType) {
+            const resultsTable = document.getElementById("results-table");
+            const pricesTable = document.getElementById("prices-table");
+
+            // Clear previous results
+            resultsTable.innerHTML = "";
+            pricesTable.innerHTML = "";
+
+            // Populate results table (only for normal/quick process, not manual)
+            if (processType !== "manual") {
+                resultsTable.innerHTML = `
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Total Pages</td>
+                        <td>${data.total_pages}</td>
+                    </tr>
+                    <tr>
+                        <td>Live Pages</td>
+                        <td>${data.live_pages}</td>
+                    </tr>
+                    <tr>
+                        <td>Dead Pages</td>
+                        <td>${data.dead_pages}</td>
+                    </tr>
+                    <tr>
+                        <td>Status</td>
+                        <td>${data.status}</td>
+                    </tr>
+                `;
+            }
+
+            // Populate prices table based on toggles
+            const showOneColumn = document.getElementById("toggle-one-column").checked;
+            const showTwoColumn = document.getElementById("toggle-two-column").checked;
+            const showArabic = document.getElementById("toggle-arabic").checked;
+
+            let pricesHTML = `
+                <tr>
+                    <th>Price Type</th>
+                    <th>Amount (USD)</th>
+                </tr>
+            `;
+
+            if (showOneColumn || (!showOneColumn && !showTwoColumn && !showArabic)) {
+                pricesHTML += `
+                    <tr>
+                        <td>One Column Price</td>
+                        <td>${data.one_column_price}</td>
+                    </tr>
+                `;
+            }
+            if (showTwoColumn || (!showOneColumn && !showTwoColumn && !showArabic)) {
+                pricesHTML += `
+                    <tr>
+                        <td>Two Column Price</td>
+                        <td>${data.two_column_price}</td>
+                    </tr>
+                `;
+            }
+            if (showArabic || (!showOneColumn && !showTwoColumn && !showArabic)) {
+                pricesHTML += `
+                    <tr>
+                        <td>Arabic Price</td>
+                        <td>${data.arabic_price}</td>
+                    </tr>
+                `;
+            }
+
+            pricesTable.innerHTML = pricesHTML;
+        }
+
+        // Clear Results Button
+        document.getElementById("clear-results").addEventListener("click", () => {
+            document.getElementById("results-table").innerHTML = "";
+            document.getElementById("prices-table").innerHTML = "";
+            document.getElementById("error").textContent = "";
+            document.getElementById("results").style.display = "none";
+        });
+
+        // Detect browser window close event
+        window.addEventListener("beforeunload", async () => {
+            await fetch("/shutdown", { method: "POST" });
+        });
+    </script>
+</body>
+</html>
