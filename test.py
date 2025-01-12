@@ -110,40 +110,12 @@ def index():
 @app.route("/process", methods=["POST"])
 def process():
     path = request.form.get("path")
-    process_type = request.form.get("process_type", "normal")  # Default to normal processing
-    check_live_dead = process_type == "normal"
-    
-    results, error = count_pdf_pages(path, check_live_dead)
+    results, error = count_pdf_pages(path)
 
     if error:
         return jsonify({"error": error})
     else:
         return jsonify(results)
-
-@app.route("/process_manual", methods=["POST"])
-def process_manual():
-    """
-    Handle manual page count input and calculate pricing.
-    """
-    try:
-        total_pages = int(request.form.get("total_pages"))
-    except (ValueError, TypeError):
-        return jsonify({"error": "Invalid number of pages. Please enter a valid integer."})
-
-    # Calculate expected prices
-    one_column_price = total_pages * 1.5
-    two_column_price = total_pages * 2.0
-    arabic_price = total_pages * 3.0
-
-    # Prepare results
-    results = {
-        "total_pages": total_pages,
-        "one_column_price": f"{one_column_price:.2f}",
-        "two_column_price": f"{two_column_price:.2f}",
-        "arabic_price": f"{arabic_price:.2f}"
-    }
-
-    return jsonify(results)
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
@@ -167,4 +139,5 @@ if __name__ == "__main__":
     open_browser()
 
     # Run the Flask app
-    app.run(debug=False)  # Disable debug mode to prevent reloading
+    port = int(os.environ.get("PORT", 5000))  # Use Render's port or default to 5000
+    app.run(host="0.0.0.0", port=port)
